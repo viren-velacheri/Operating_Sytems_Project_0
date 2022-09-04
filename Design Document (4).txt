@@ -1,0 +1,273 @@
+﻿+--------------------+
+                        |        CS 439      |
+                        |  PROJECT 0: SHELL  |
+                        |   DESIGN DOCUMENT  |
+                        +--------------------+
+
+
+
+
+The questions in this design document should reflect the design of the code you
+wrote for the project.  Your grade will reflect both the quality of your answer
+in this document and the quality of the design implementation in your code.  You
+may receive partial credit for answering questions for parts of the project that
+you did not get to implement, but you must indicate in your answer that there is
+no corresponding implementation, or you will not receive any credit.
+
+
+
+
+For each question, you should include both the name of the file(s), function
+name(s), and the line numbers where the relevant code may be found.
+
+
+
+
+These design documents should be completed individually.  Group members are
+welcome to use this document as a guide for design and are welcome to discuss
+the questions, but there should be no group notes or other sorts of copying of
+design documents.
+
+
+
+
+When you have completed your design document, submit it to the Canvas assignment
+Project 1 Design and Documentation.  ***Your submission must be a text file and
+each line must not extend past 80 characters.  In addition, your submission must
+contain all of the original material and not exceed 8,000 characters.  The
+character count will be measured using the Linux command wc.  (Note that rtf
+files are NOT text files.)
+
+
+
+
+################
+YOUR INFO
+################
+Name1: Viren Velacheri
+EID1: vv6898
+CS login: vtrain
+Email: viren.velacheri@utexas.edu
+Unique Number: 50485
+
+
+
+
+Slip days used: 1
+
+
+
+
+****EACH student submits a (unique) design document.****
+
+
+
+
+################
+YOUR PARTNER'S INFO
+################
+Name1: Jasper Lin
+EID1: jl67987
+CS login: jasperl
+Email: jasperlin@utexas.edu
+Unique Number: 50485
+
+
+
+
+Your partner's ranking (scale below):
+Excellent.
+
+
+################
+PARTNER EVALUATION SCALE
+################
+Excellent: Consistently went above and beyond - tutored others, carried
+more than his/her fair share of the load.
+
+
+
+
+Very Good: Consistently did what he/she was supposed to do, very well
+prepared and cooperative.
+
+
+
+
+Satisfactory: Usually did what he/she was supposed to do, minimally
+prepared and cooperative.
+
+
+
+
+Marginal: Sometimes failed to show up and/or rarely prepared.
+
+
+
+
+Deficient: Often failed to show up and/or rarely prepared.
+
+
+
+
+Unsatisfactory: Consistently failed to show up and/or unprepared.
+
+
+
+
+Superficial: Practically no participation.
+
+
+
+
+No Show: No participation at all.
+
+
+
+
+################
+Preliminaries
+################
+(1) If you have any preliminary comments on your submission or notes for
+  the TA, please give them here.
+
+
+
+
+(2) Please cite any offline or online sources you consulted while
+  preparing your submission, other than the Linux documentation,
+  course text, and lecture notes.
+1. https://tinyurl.com/wg98x58
+
+
+
+
+
+
+################
+Questions regarding Part 0
+################
+(1) How many child processes are created when doFib() begins with
+  an input of 5?  Show the return value for each child process, numbering
+  the processes beginning with 0 (the original process) and incrementing for
+  each child process.
+There are 14 child processes created. 
+Process 0 (the parent process): 5
+Process 1: 3
+Process 2: 2
+Process 3: 1
+Process 4: 2
+Process 5: 1
+Process 6: 0
+Process 7: 1
+Process 8: 1
+Process 9: 0
+Process 10: 0
+Process 11: 1
+Process 12: 1
+Process 13: 1
+Process 14: 1
+
+
+(2) In part 0.3, which flavor of exec did you choose to use?  Why?
+I used the execve function in file psh.c, line 134. I chose
+this for a couple of reasons. The first is that we found this 
+in the textbook itself (page 750). It seemed the simplest to use as 
+we simply put in the path name (argv[0]), the array of 
+argument strings (argv), and the environment 
+variable (environ). Even though there are other exec
+functions that we could have used like execvp, we found 
+a source (https://tinyurl.com/wg98x58) that said that execve
+is the one most commonly used function for overlaying
+the original process image with the new process image
+created by the call to the fork function.
+
+
+
+
+################
+Questions regarding Part 1
+################
+(1) In the provided utility function Signal(), what does the call to
+  sigaction() do?  Why was sigaction() used instead of signal()?
+In file util.c, line 98, the call to sigaction is made. It essentially 
+maps a signal handler to the appropriate signal, helping install
+ the needed signal handler. Sigaction() was used instead of 
+signal as it allows you to specify more of the signal handling
+ semantics when installing a handler. There are more arguments
+ and such. It is also more reliable than signal() as the handler 
+isn’t reinstalled since it will never be reset. For signal(), the 
+signal action is set back to SIG_DFL for like all signals, so it
+has to reinstall itself each time. Lastly, while the current handler
+is running and before it returns, sigaction() can block the other signals. 
+
+
+(2) What is the last assembly language instruction executed by the
+  signal handler function that you write?  You may choose either signal
+  Handler, but please specify which one you are considering.
+For the sigUsrHandler in file handle.c (lines 42 - 54), the 
+last assembly language instruction is callq 0x9e0 <exit@plt>. 
+I think this is a callq exit@plt instruction which is the instruction
+that happens when you exit a process.
+
+
+(3) After the instruction identified in the previous question executes, 
+  what is the next assembly language instruction executed in the application 
+  Code?
+There is no other instruction after this one as we just 
+exit the program after the exit call in our
+sigUsrHandler.
+
+
+
+
+
+
+
+
+################
+Questions regarding Part 2
+################
+(1) Consider your implementation of waitfg().  How did you avoid race
+  conditions with the SIGCHLD handler?  How did you avoid busy waiting?
+In file msh.c, lines 302 - 316. Basically, we clear the signals
+ to block on and then add the SIGCHLD to the
+ set of signals that we block on (lines 305 - 307 before the while loop).
+ While the given process pid is a foreground process, we block SIGCHLD.
+Then we call sigsuspend which temporarily replaces the signal mask
+of the calling process with the mask given by prevmask and
+ suspends the process until it receives a signal that’s action is
+ to run a signal handler or terminate the process. After that we 
+restore the previous unblocked set, unblocking SIGCHLD.
+Through this way of blocking and unblocking on the
+SIGCHLD signal we avoid the race conditions. Sigsuspend()
+also helps as it avoids the race condition that would otherwise
+be introduced by pause(). Sigsuspend is also what allowed 
+us to avoid busy waiting as it is less wasteful than the 
+usual spin loop implementation and is more 
+efficient than sleep. It prevents us from having 
+to constantly check the loop condition. 
+
+
+(2) In msh.c, we use three separate signal handlers to catch our signals. 
+  You can also use a single signal handler to catch all three signals.  Is
+  there a design advantage of one over the other?  Explain your answer.
+It depends. Using one signal handler allows you to catch 
+one signal at a time, so while catching one, the others will
+be blocked. This is better for handling race 
+conditions or where you are handling multiple
+signals coming in. You would, however, need to identify
+which signal came in with a set of ifs or switch 
+statement. With three signal handlers, it is
+more efficient as you are handling three separate
+signals concurrently. However, race conditions 
+become a factor as signals don’t pend for 
+signals of other types. Also, if there is a global data
+structure shared among the handlers, each
+of the handlers have to temporarily block
+all signals when accessing that structure. With a single 
+signal handler, you don’t have to worry about 
+doing this. Notice though with separate signal handlers like 
+sigint_handler(lines 408-421 in msh.c), we don’t examine the signal 
+or see which signal was sent since the specific
+handler is only called when the corresponding signal occurs.
